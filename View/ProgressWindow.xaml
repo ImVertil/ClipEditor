@@ -1,0 +1,81 @@
+﻿<Window x:Class="ClipEditor.View.ProgressWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ClipEditor.View"
+        xmlns:viewModels="clr-namespace:ClipEditor.ViewModel"
+        xmlns:converters="clr-namespace:ClipEditor.Core.Converters"
+        mc:Ignorable="d"
+        Title="" Height="200" Width="400"
+        ResizeMode="CanMinimize"
+        WindowStartupLocation="CenterScreen"
+        ShowInTaskbar="False"
+        Closing="Window_Closing">
+    <d:Window.DataContext>
+        <viewModels:MainWindowViewModel/>
+    </d:Window.DataContext>
+
+    <Window.Icon>
+        <DrawingImage/>
+    </Window.Icon>
+    <Window.Resources>
+        <converters:BooleanCustomConverter x:Key="BooleanCustomConverter"/>
+        <converters:EnumCustomConverter x:Key="EnumCustomConverter"/>
+        <Style TargetType="ProgressBar">
+            <Setter Property="Foreground" Value="LimeGreen" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status, Converter={StaticResource EnumCustomConverter}, ConverterParameter='Canceled'}" Value="True">
+                    <Setter Property="Foreground" Value="DarkGray" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height=".25*"/>
+            <RowDefinition Height=".25*"/>
+            <RowDefinition Height=".3*"/>
+            <RowDefinition Height=".2*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="{Binding OutputClip.Name, UpdateSourceTrigger=PropertyChanged}" 
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"/>
+
+        <ProgressBar Grid.Row="1" Height="30" VerticalAlignment="Top" Margin="15,5,15,0" 
+                     Value="{Binding Progress, UpdateSourceTrigger=PropertyChanged}"/>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,10,0,0" >
+            <TextBlock Grid.Row="1" Height="20" FontWeight="Bold" Text="{Binding Progress, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBlock Grid.Row="1" Height="20" FontWeight="Bold" Text="%"/>
+        </StackPanel>
+
+        <TextBlock Grid.Row="2" VerticalAlignment="Top" HorizontalAlignment="Center" 
+                   Text="{Binding ProgressString, UpdateSourceTrigger=PropertyChanged}"/>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,0,10,5">
+            <StackPanel.Resources>
+                <Style TargetType="{x:Type Button}">
+                    <Setter Property="Margin" Value="10,0,0,0"/>
+                    <Setter Property="Width" Value="75"/>
+                    <Setter Property="Height" Value="25"/>
+                </Style>
+            </StackPanel.Resources>
+            
+            <Button Name="okButton"
+                    Content="Ok"
+                    IsEnabled="{Binding Status, Converter={StaticResource EnumCustomConverter}, ConverterParameter='Finished,Canceled'}"
+                    Click="Button_Click"/>
+            <Button Name="openFolderButton" 
+                    Content="Open Folder"
+                    Command="{Binding OpenFolderCommand}"
+                    IsEnabled="{Binding Status, Converter={StaticResource EnumCustomConverter}, ConverterParameter='Finished'}"
+                    Click="Button_Click"/>
+            <Button Name="cancelButton" 
+                    Content="Cancel"
+                    Command="{Binding CancelTaskCommand}"
+                    IsEnabled="{Binding Status, Converter={StaticResource EnumCustomConverter}, ConverterParameter='InProgress'}"/>
+        </StackPanel>
+    </Grid>
+</Window>
