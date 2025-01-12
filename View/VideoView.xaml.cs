@@ -85,9 +85,16 @@ namespace ClipEditor.View
 
         private void SetVideoPositionToSliderValue()
         {
-            TimeSpan ts = new(0, 0, 0, 0, (int)timelineSlider.Value);
-            mainVideo.Position = ts;
-            vidCurrent.Text = Tools.GetTimeStringFromTimeSpan(ts);
+            try
+            {
+                TimeSpan ts = new(0, 0, 0, 0, (int)timelineSlider.Value);
+                mainVideo.Position = ts;
+                vidCurrent.Text = Tools.GetTimeStringFromTimeSpan(ts);
+            }
+            catch (Exception ex)
+            {
+                DialogManager.ShowErrorDialog(ex.Message);
+            }
         }
 
         private void VideoView_Loaded(object sender, RoutedEventArgs e)
@@ -162,10 +169,17 @@ namespace ClipEditor.View
 
         private void MainVideo_MediaEnded(object sender, RoutedEventArgs e)
         {
-            mainVideo.Position = new(0, 0, 0, 0, (int)clipRangeSlider.LowerValue);
-            timelineSlider.Value = 0;
-            //_positionTimer?.Stop();
-            mainVideo.Play();
+            try
+            {
+                mainVideo.Position = new(0, 0, 0, 0, (int)clipRangeSlider.LowerValue);
+                timelineSlider.Value = clipRangeSlider.LowerValue;
+                //_positionTimer?.Stop();
+                PlayVideo();
+            }
+            catch (Exception ex)
+            {
+                DialogManager.ShowErrorDialog(ex.Message);
+            }
         }
 
         private void PositionTimer_Tick(object sender, EventArgs e)
