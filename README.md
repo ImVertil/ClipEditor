@@ -4,6 +4,9 @@ An application that allows you to cut the best moments from your videos/clips vi
 <br/>
 This is a personal project that I work on at my own pace. New features will be added as I see fit, based mostly on my needs.
 
+## Showcase
+[![Watch the showcase here](https://img.youtube.com/vi/E_NA8-V7aww/0.jpg)](https://www.youtube.com/watch?v=E_NA8-V7aww)
+
 ## Libraries/Tools used
 - [Xabe.FFmpeg](https://ffmpeg.xabe.net/)
 - [FFmpeg](https://www.ffmpeg.org/)
