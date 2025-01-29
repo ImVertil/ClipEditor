@@ -10,7 +10,8 @@
              d:DesignHeight="450" d:DesignWidth="800"
              AllowDrop="True"
              Loaded="VideoView_Loaded"
-             Drop="UserControl_Drop">
+             Drop="UserControl_Drop"
+             SizeChanged="UserControl_SizeChanged">
     <UserControl.Resources>
         <Style TargetType="Image">
             <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
@@ -99,7 +100,7 @@
                       MediaEnded="MainVideo_MediaEnded"/>
         
         <!-- ### Slider Area ### -->
-        <Grid Grid.Row="2">
+        <Grid Name="sliderGrid" Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width=".05*"/>
                 <ColumnDefinition Width=".9*"/>
@@ -107,7 +108,7 @@
             </Grid.ColumnDefinitions>
 
             <TextBlock Name="vidCurrent" Grid.Column="0"  Foreground="White" Margin="0,0,0,7.5" Width="Auto" HorizontalAlignment="Right" VerticalAlignment="Bottom" Text="0:00"/>
-            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0">
+            <StackPanel Name="sliderPanel" Grid.Column="1" VerticalAlignment="Center">
                 <wpfToolkit:RangeSlider x:Name="clipRangeSlider" Grid.Column="1" Width="Auto" VerticalAlignment="Top"
                                         Minimum="0" Maximum="{Binding Video.DurationMs, UpdateSourceTrigger=PropertyChanged}"
                                         LowerValueChanged="ClipRangeSlider_LowerValueChanged"
@@ -123,6 +124,12 @@
                         ValueChanged="TimelineSlider_ValueChanged"
                         IsEnabled="False"/>
             </StackPanel>
+            <TextBlock Name="clipLength" Grid.Column="1" Foreground="White" Text="0:00" Margin="0,7.5,0,0" 
+                       VerticalAlignment="Top"
+                       HorizontalAlignment="Left"
+                       TextAlignment="Center" 
+                       IsHitTestVisible="False" 
+                       Width="30" Height="17.5"/>
             <TextBlock Name="vidLength" Grid.Column="2" Foreground="White" Margin="0,0,0,7.5" Width="Auto" HorizontalAlignment="Left" VerticalAlignment="Bottom"
                        Text="{Binding Video.Duration, UpdateSourceTrigger=PropertyChanged}"/>
         </Grid>
