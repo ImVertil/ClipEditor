@@ -1,5 +1,6 @@
 ﻿using ClipEditor.Core.Tools;
 using System.IO;
+using Xabe.FFmpeg;
 
 namespace ClipEditor.Model
 {
@@ -10,16 +11,18 @@ namespace ClipEditor.Model
         public string FileNameWithExtension { get; private set; }
         public string FileExtension { get; private set; }
         public TimeSpan TimeSpan { get; private set; }
+        public IMediaInfo MediaInfo { get; private set; }
         public string Duration => Tools.GetTimeStringFromTimeSpan(TimeSpan);
         public double DurationMs => TimeSpan.TotalMilliseconds;
 
-        public Video(string filePath, TimeSpan duration)
+        public Video(IMediaInfo mediaInfo)
         {
-            FilePath = filePath;
-            FileName = Path.GetFileNameWithoutExtension(filePath);
-            FileNameWithExtension = Path.GetFileName(filePath);
-            FileExtension = Path.GetExtension(filePath);
-            TimeSpan = duration;
+            FilePath = mediaInfo.Path;
+            FileName = Path.GetFileNameWithoutExtension(mediaInfo.Path);
+            FileNameWithExtension = Path.GetFileName(mediaInfo.Path);
+            FileExtension = Path.GetExtension(mediaInfo.Path);
+            TimeSpan = mediaInfo.Duration;
+            MediaInfo = mediaInfo;
         }
 
         public Video()

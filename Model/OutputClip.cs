@@ -13,9 +13,9 @@ namespace ClipEditor.Model
 
         public OutputClip(string path)
         {
-            FullPath = (path == string.Empty) ? Path.GetFullPath($"out\\defaultVideo") : Path.GetFullPath(path);
+            FullPath = path;
             Name = Path.GetFileName(path);
-            Folder = Path.GetDirectoryName(path) ?? Path.GetFullPath($"out\\"); // replace later when settings for output folders are added
+            Folder = Path.GetDirectoryName(path) ?? Path.GetFullPath($"out\\");
             ProgressString = "[00:00:00 / 00:00:00]";
             Progress = 0;
             Status = ClipStatus.InProgress;
@@ -35,7 +35,7 @@ namespace ClipEditor.Model
     internal enum ClipStatus
     {
         InProgress,
-        InCancellation,
+        AwaitingCancel,
         Canceled,
         Finished
     }

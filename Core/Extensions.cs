@@ -1,13 +1,17 @@
-﻿namespace ClipEditor.Core
+﻿using System.IO;
+
+namespace ClipEditor.Core
 {
     internal static class Extensions
     {
-        public static bool EndsWithAny(this string s, params string[] parameters)
+        public static bool HasAnyExtension(this string path, params string[] extensions)
         {
-            foreach(string parameter in parameters)
+            foreach (string ext in extensions)
             {
-                if (s.Contains(parameter))
+                if (Path.GetExtension(path) == ext)
+                {
                     return true;
+                }
             }
 
             return false;

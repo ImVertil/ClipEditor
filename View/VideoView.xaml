@@ -181,7 +181,7 @@
                                 <Slider Name="bitrateSlider" Width="100" Margin="5"
                                         Minimum="0" Maximum="10"
                                         TickPlacement="BottomRight"
-                                        TickFrequency="2"
+                                        Ticks="0,2,4,6,8,10"
                                         IsSnapToTickEnabled="True"
                                         ValueChanged="BitrateSlider_ValueChanged"/>
                                 <TextBlock Name="bitrateText" Text="Def." Foreground="White" Margin="0,5,0,0"/>
