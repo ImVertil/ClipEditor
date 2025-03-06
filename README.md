@@ -20,4 +20,4 @@ This is a personal project that I work on at my own pace. New features will be a
 If you want to build the application yourself:
 - Clone the repository and open the project in Visual Studio,
 - Make sure `Xabe.FFmpeg` and `Extended.Wpf.Toolkit` packages are installed via NuGet,
-- After you build the application, make sure you either put `ffmpeg.exe` and `ffprobe.exe` in the Resources folder or have FFmpeg configured in `PATH`.
+- After you build the application, make sure you either put `ffmpeg` and `ffprobe` executables in the Resources folder or have FFmpeg configured in `PATH`.

@@ -18,6 +18,9 @@ namespace ClipEditor.View
     {
         private readonly DispatcherTimer _positionTimer = new();
 
+        private Thumb _lowerThumb;
+        private Thumb _higherThumb;
+        private Point _zeroPoint = new(0, 0);
         private bool _isPlaying = true;
         private bool _wasPlayingBeforeDrag;
 
@@ -85,9 +88,35 @@ namespace ClipEditor.View
 
         private void SetVideoPositionToSliderValue()
         {
-            TimeSpan ts = new(0, 0, 0, 0, (int)timelineSlider.Value);
-            mainVideo.Position = ts;
-            vidCurrent.Text = Tools.GetTimeStringFromTimeSpan(ts);
+            try
+            {
+                TimeSpan ts = new(0, 0, 0, 0, (int)timelineSlider.Value);
+                mainVideo.Position = ts;
+                vidCurrent.Text = Tools.GetTimeStringFromTimeSpan(ts);
+            }
+            catch (Exception ex)
+            {
+                DialogManager.ShowErrorDialog(ex.Message);
+            }
+        }
+
+        private void SetClipLengthTextPosition()
+        {
+            clipLength.Visibility = Visibility.Visible;
+            double lowerPoint = _lowerThumb.TranslatePoint(_zeroPoint, sliderPanel).X;
+            double higherPoint = _higherThumb.TranslatePoint(_zeroPoint, sliderPanel).X;
+
+            if (higherPoint - lowerPoint < clipLength.Width)
+            {
+                clipLength.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            double textPoint = clipLength.TranslatePoint(_zeroPoint, sliderPanel).X;
+            double midPoint = lowerPoint + (higherPoint - lowerPoint) / 2;
+            clipLength.Margin = new Thickness(midPoint - (clipLength.ActualWidth / 2) + 5, clipLength.Margin.Top, clipLength.Margin.Right, clipLength.Margin.Bottom);
+            TimeSpan ts = new(0, 0, 0, 0, (int)(clipRangeSlider.HigherValue - clipRangeSlider.LowerValue));
+            clipLength.Text = ts.TotalSeconds < 1 ? "<0:01" : Tools.GetTimeStringFromTimeSpan(ts);
         }
 
         private void VideoView_Loaded(object sender, RoutedEventArgs e)
@@ -132,10 +161,23 @@ namespace ClipEditor.View
                     PlayVideo();
             });
 
-            lowerTrack.Thumb.AddHandler(PreviewMouseLeftButtonDownEvent, leftButtonDownEventHandler, true);
-            lowerTrack.Thumb.AddHandler(PreviewMouseLeftButtonUpEvent, leftButtonUpEventHandler, true);
-            higherTrack.Thumb.AddHandler(PreviewMouseLeftButtonDownEvent, leftButtonDownEventHandler, true);
-            higherTrack.Thumb.AddHandler(PreviewMouseLeftButtonUpEvent, leftButtonUpEventHandler, true);
+            _lowerThumb = lowerTrack.Thumb;
+            _higherThumb = higherTrack.Thumb;
+
+            _lowerThumb.AddHandler(PreviewMouseLeftButtonDownEvent, leftButtonDownEventHandler, true);
+            _lowerThumb.AddHandler(PreviewMouseLeftButtonUpEvent, leftButtonUpEventHandler, true);
+            _higherThumb.AddHandler(PreviewMouseLeftButtonDownEvent, leftButtonDownEventHandler, true);
+            _higherThumb.AddHandler(PreviewMouseLeftButtonUpEvent, leftButtonUpEventHandler, true);
+
+            clipLength.Visibility = Visibility.Collapsed;
+        }
+
+        private void UserControl_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (!IsLoaded)
+                return;
+
+            SetClipLengthTextPosition();
         }
 
         private void MainVideo_MediaOpened(object sender, RoutedEventArgs e)
@@ -155,17 +197,27 @@ namespace ClipEditor.View
             saveClipButton.IsEnabled = true;
             playButton.IsEnabled = true;
             noVidText.Visibility = Visibility.Collapsed;
+            clipRangeSlider.UpdateLayout();
 
             mainVideo.LoadedBehavior = MediaState.Manual;
             PlayVideo();
+
+            SetClipLengthTextPosition();
         }
 
         private void MainVideo_MediaEnded(object sender, RoutedEventArgs e)
         {
-            mainVideo.Position = new(0, 0, 0, 0, (int)clipRangeSlider.LowerValue);
-            timelineSlider.Value = 0;
-            //_positionTimer?.Stop();
-            mainVideo.Play();
+            try
+            {
+                mainVideo.Position = new(0, 0, 0, 0, (int)clipRangeSlider.LowerValue);
+                timelineSlider.Value = clipRangeSlider.LowerValue;
+                //_positionTimer?.Stop();
+                PlayVideo();
+            }
+            catch (Exception ex)
+            {
+                DialogManager.ShowErrorDialog(ex.Message);
+            }
         }
 
         private void PositionTimer_Tick(object sender, EventArgs e)
@@ -215,11 +267,13 @@ namespace ClipEditor.View
 
         private void ClipRangeSlider_LowerValueChanged(object sender, RoutedEventArgs e)
         {
+            SetClipLengthTextPosition();
             timelineSlider.Value = clipRangeSlider.LowerValue;
         }
 
         private void ClipRangeSlider_HigherValueChanged(object sender, RoutedEventArgs e)
         {
+            SetClipLengthTextPosition();
             timelineSlider.Value = clipRangeSlider.HigherValue;
         }
 

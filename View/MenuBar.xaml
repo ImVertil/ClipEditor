@@ -23,7 +23,7 @@
                 <MenuItem Header="Open..." Command="{Binding OpenFileCommand}"/>
                 <MenuItem Header="Open output folder" Command="{Binding OpenFolderCommand}"/>
             </MenuItem>
-            <MenuItem Header="Settings" IsEnabled="False"/>
+            <MenuItem Header="Settings" Command="{Binding OpenSettingsWindowCommand}"/>
             <MenuItem Header="About" IsEnabled="False"/>
         </Menu>
 

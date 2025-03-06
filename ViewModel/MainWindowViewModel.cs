@@ -74,6 +74,7 @@ namespace ClipEditor.ViewModel
         public RelayCommand SaveClipCommand => new(execute => ClipVideo((ClipData)execute));
         public RelayCommand OpenFolderCommand => new(execute => OpenFolder());
         public RelayCommand CancelTaskCommand => new(execute => CancelTask());
+        public RelayCommand OpenSettingsWindowCommand => new(execute => OpenSettingsWindow());
 
         private async void OpenFile()
         {
@@ -87,7 +88,7 @@ namespace ClipEditor.ViewModel
                 try
                 {
                     var mediaInfo = await FFmpeg.GetMediaInfo(opf.FileName);
-                    Video = new Video(opf.FileName, mediaInfo.Duration);
+                    Video = new Video(mediaInfo);
                 }
                 catch (Exception ex)
                 {
@@ -98,7 +99,7 @@ namespace ClipEditor.ViewModel
 
         private async void DragDropFile(string path)
         {
-            if (!path.EndsWithAny(".mp4", ".mkv", ".avi"))
+            if (!path.HasAnyExtension(".mp4", ".mkv", ".avi"))
             {
                 DialogManager.ShowErrorDialog("Unsupported file format.");
                 return;
@@ -109,7 +110,7 @@ namespace ClipEditor.ViewModel
                 try
                 {
                     var mediaInfo = await FFmpeg.GetMediaInfo(path);
-                    Video = new Video(path, mediaInfo.Duration);
+                    Video = new Video(mediaInfo);
                 }
                 catch (Exception ex)
                 {
@@ -141,25 +142,23 @@ namespace ClipEditor.ViewModel
                 progressWindow.Show();
                 progressWindow.Focus();
 
-                var mediaInfo = await FFmpeg.GetMediaInfo(Video.FilePath);
                 string seekValue = data.StartPosition.ToFFmpegRounded();
                 string toValue = data.EndPosition.ToFFmpegRounded();
                 string timeValue = (data.EndPosition.RoundMilliseconds() - data.StartPosition.RoundMilliseconds()).ToFFmpeg();
-                //var clipPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "out", $"{Video.FileName}_output{Video.FileExtension}");
-                var clipPath = Path.GetFullPath($"out\\{Video.FileName}_output{Video.FileExtension}");  // replace later when settings for output folders are added
+                var clipPath = SettingsManager.GetOutputFolderPath(Video);
                 OutputClip = new(clipPath);
 
                 IConversion conversion = FFmpeg.Conversions.New()
-                        .AddStream(mediaInfo.Streams)
+                        .AddStream(Video.MediaInfo.Streams)
                         .AddParameter($"-ss {seekValue}", ParameterPosition.PreInput)
                         .AddParameter($"-to {timeValue}")
                         .SetOutput(OutputClip.FullPath)
                         .SetOverwriteOutput(true);
 
-                if (mediaInfo.AudioStreams.Count() == 2)
+                if (Video.MediaInfo.AudioStreams.Count() == 2)
                 {
                     conversion.AddParameter($"-filter_complex \"[0:a:0][0:a:1]amix=inputs=2[a]\" -map \"[a]\" -map -0:a:0 -map -0:a:1");
-                    conversion.AddParameter($"-c:a aac -b:a 160k");
+                    conversion.AddParameter($"-c:a aac -b:a 192k");
                 }
                 else
                 {
@@ -177,6 +176,22 @@ namespace ClipEditor.ViewModel
 
                 conversion.OnProgress += (sender, args) =>
                 {
+                    if (Status == ClipStatus.AwaitingCancel)
+                    {
+                        try
+                        {
+                            using (CancellationTokenSource)
+                            {
+                                CancellationTokenSource.Cancel();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            DialogManager.ShowErrorDialog(ex.Message);
+                        }
+
+                        return;
+                    }
                     Progress = (int)(Math.Round(args.Duration.TotalSeconds / data.ClipLength.TotalSeconds, 2) * 100);
                     ProgressString = $"[{args.Duration} / {data.ClipLength.ToString(@"hh\:mm\:ss")}]";
                 };
@@ -192,7 +207,7 @@ namespace ClipEditor.ViewModel
             {
                 Stopwatch sw = Stopwatch.StartNew();
 
-                while (Status == ClipStatus.InCancellation && sw.Elapsed.TotalSeconds < 5)
+                while (Status == ClipStatus.AwaitingCancel && sw.Elapsed.TotalSeconds < 5)
                 {
                     try
                     {
@@ -206,9 +221,9 @@ namespace ClipEditor.ViewModel
                     await Task.Delay(500);
                 }
 
-                if (Status == ClipStatus.InCancellation)
+                if (Status == ClipStatus.AwaitingCancel)
                 {
-                    DialogManager.ShowErrorDialog("The output file of canceled operation could not be removed. Please check the output folder to remove it manually.");
+                    DialogManager.ShowErrorDialog("The output file could not be removed. Please check the output folder to remove it manually.");
                     ProgressString = "Canceled";
                     Status = ClipStatus.Canceled;
                 }
@@ -221,19 +236,8 @@ namespace ClipEditor.ViewModel
 
         private void CancelTask()
         {
-            try
-            {
-                using (CancellationTokenSource)
-                {
-                    ProgressString = "Cancelling...";
-                    Status = ClipStatus.InCancellation;
-                    CancellationTokenSource.Cancel();
-                }
-            }
-            catch (Exception ex)
-            {
-                DialogManager.ShowErrorDialog(ex.Message);
-            }
+            ProgressString = "Cancelling...";
+            Status = ClipStatus.AwaitingCancel;
         }
 
         private void OpenFolder()
@@ -246,6 +250,12 @@ namespace ClipEditor.ViewModel
             {
                 DialogManager.ShowErrorDialog(ex.Message);
             }
+        }
+
+        private void OpenSettingsWindow()
+        {
+            SettingsWindow settingsWindow = new SettingsWindow();
+            settingsWindow.ShowDialog();
         }
     }
 }
